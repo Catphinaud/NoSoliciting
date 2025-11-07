@@ -177,6 +177,7 @@ namespace NoSoliciting {
 
             var custom = false;
             MessageCategory? classification = null;
+            float? confidenceLocal = null;
 
             // step 1. check for custom filters if enabled
             var filter = false;
@@ -187,13 +188,22 @@ namespace NoSoliciting {
 
             // only look at ml if message >= min words
             if (!filter && this.Plugin.MlFilter != null && CountWords(text) >= MinWords) {
-                // step 2. classify the message using the model
-                var category = this.Plugin.MlFilter.ClassifyMessage((ushort) chatType, text);
+                var (predCategory, confidence) = this.Plugin.MlFilter.ClassifyMessage((ushort) chatType, text);
+                var threshold = this.Plugin.Config.ConfidenceThreshold;
+                var passesThreshold = confidence >= threshold;
 
-                // step 2a. only filter if configured to act on this channel
-                if (category != MessageCategory.Normal && this.Plugin.Config.MlEnabledOn(category, chatType)) {
-                    filter = true;
-                    classification = category;
+                if (predCategory != MessageCategory.Normal && passesThreshold && this.Plugin.Config.MlEnabledOn(predCategory, chatType)) {
+                    filter = !this.Plugin.Config.TestMode; // suppress actual filtering in test mode
+                    classification = predCategory;
+                }
+
+                if (this.Plugin.Config.TestMode) {
+                    classification = predCategory == MessageCategory.Normal ? null : predCategory;
+                }
+
+                // record confidence if classification present
+                if (classification != null) {
+                    confidenceLocal = confidence;
                 }
             }
 
@@ -206,7 +216,8 @@ namespace NoSoliciting {
                 classification,
                 custom,
                 false,
-                this.Plugin.Config.CreateFiltersClone()
+                this.Plugin.Config.CreateFiltersClone(),
+                confidenceLocal
             );
             this.Plugin.AddMessageHistory(history);
 
@@ -244,10 +255,9 @@ namespace NoSoliciting {
                 return (null, null);
             }
 
-            var category = this.Plugin.MlFilter.ClassifyMessage((ushort) ChatType.None, desc);
-
-            if (category != MessageCategory.Normal && this.Plugin.Config.MlEnabledOn(category, ChatType.None)) {
-                return (category, Enum.GetName(category));
+            var (predCategory, confidence) = this.Plugin.MlFilter.ClassifyMessage((ushort) ChatType.None, desc);
+            if (predCategory != MessageCategory.Normal && confidence >= this.Plugin.Config.ConfidenceThreshold && this.Plugin.Config.MlEnabledOn(predCategory, ChatType.None)) {
+                return (predCategory, Enum.GetName(predCategory));
             }
 
             return (null, null);

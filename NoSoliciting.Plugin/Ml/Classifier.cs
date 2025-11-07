@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using Microsoft.ML;
 using NoSoliciting.Interface;
 
@@ -24,8 +25,18 @@ namespace NoSoliciting.Ml {
             this.PredictionEngine = this.Context.Model.CreatePredictionEngine<Data, Prediction>(this.Model, this.Schema);
         }
 
-        public string Classify(ushort channel, string message) {
-            return this.PredictionEngine?.Predict(new Data(channel, message))?.Category ?? "UNKNOWN";
+        public ClassifyResult Classify(ushort channel, string message) {
+            var pred = this.PredictionEngine?.Predict(new Data(channel, message));
+            if (pred == null) return new ClassifyResult("UNKNOWN", 0f);
+            // Score array order matches training order; find chosen label index for confidence if possible
+            var label = pred.Category ?? "UNKNOWN";
+            float confidence = 0f;
+            if (pred.Probabilities != null && pred.Probabilities.Length > 0) {
+                // try mapping label back to index using training label order heuristics
+                // fallback: max probability
+                confidence = pred.Probabilities.Max();
+            }
+            return new ClassifyResult(label, confidence);
         }
 
         public void Dispose() {

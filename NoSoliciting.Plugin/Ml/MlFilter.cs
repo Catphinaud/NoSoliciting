@@ -31,16 +31,16 @@ namespace NoSoliciting.Ml {
             this.ReportUrl = reportUrl;
         }
 
-        public MessageCategory ClassifyMessage(ushort channel, string message) {
+        public (MessageCategory category, float confidence) ClassifyMessage(ushort channel, string message) {
             var prediction = this.Classifier.Classify(channel, message);
-            var category = MessageCategoryExt.FromString(prediction);
+            var category = MessageCategoryExt.FromString(prediction.Category);
 
             if (category != null) {
-                return (MessageCategory) category;
+                return ((MessageCategory) category, prediction.Confidence);
             }
 
-            Plugin.Log.Warning($"Unknown message category: {prediction}");
-            return MessageCategory.Normal;
+            Plugin.Log.Warning($"Unknown message category: {prediction.Category}");
+            return (MessageCategory.Normal, prediction.Confidence);
         }
 
         public static async Task<MlFilter?> Load(Plugin plugin, bool showWindow) {

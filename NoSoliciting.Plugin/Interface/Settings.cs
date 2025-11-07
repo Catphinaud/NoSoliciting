@@ -9,15 +9,32 @@ using Dalamud.Interface.Utility.Raii;
 using NoSoliciting.Ml;
 using NoSoliciting.Resources;
 
-namespace NoSoliciting.Interface
-{
-    public class Settings : IDisposable
-    {
+namespace NoSoliciting.Interface {
+    public class Settings : IDisposable {
         private Plugin Plugin { get; }
         private PluginUi Ui { get; }
 
         private bool _isOpen;
         private SettingsPage _page = SettingsPage.Overview;
+
+        private string _testMessage = string.Empty;
+        private ChatType _testChatType = ChatType.Say;
+        private MessageCategory? _testCategory;
+        private float _testConfidence;
+        private bool _testWouldFilter;
+        private bool _testRan;
+
+        private readonly (string label, ChatType chatType, string text)[] _examples = {
+            ("RMT Gil", ChatType.Shout, "Cheap gil for sale! 10M=5$ bestgil.com"),
+            ("RMT Content", ChatType.Shout, "Offering raid clears & leveling services, fast delivery discord"),
+            ("Phishing", ChatType.Say, "FREE GIFT claim at mogstation-freerewards.com now"),
+            ("Trade", ChatType.Shout, "WTS rare mount PST offers"),
+            ("Free Company", ChatType.Shout, "FC recruiting casual players, friendly helpful community!"),
+            ("Roleplaying", ChatType.Yell, "Tavern RP tonight in Limsa – seeking adventurers"),
+            ("Static", ChatType.Shout, "Static recruiting WAR + WHM weekday prog 8pm EST"),
+            ("Community", ChatType.Shout, "Join our discord for giveaways & events!"),
+            ("Fluff", ChatType.Say, "Good morning Eorzea!"),
+        };
 
         public Settings(Plugin plugin, PluginUi ui)
         {
@@ -77,6 +94,9 @@ namespace NoSoliciting.Interface
                 case SettingsPage.Model:
                     DrawModel();
                     break;
+                case SettingsPage.Test:
+                    DrawTest();
+                    break;
                 case SettingsPage.Filters:
                     DrawFilters();
                     break;
@@ -93,7 +113,7 @@ namespace NoSoliciting.Interface
             ImGui.End();
         }
 
-        private enum SettingsPage { Overview, Model, Filters, Advanced, Other }
+        private enum SettingsPage { Overview, Model, Test, Filters, Advanced, Other }
 
         private void DrawSidebar()
         {
@@ -102,6 +122,7 @@ namespace NoSoliciting.Interface
 
             SidebarButton("Overview", SettingsPage.Overview, "Quick status and common actions.");
             SidebarButton("Model", SettingsPage.Model, "Configure model source and reload.");
+            SidebarButton("Test", SettingsPage.Test, "Try messages against the model.");
             SidebarButton("Filters", SettingsPage.Filters, "Custom chat and Party Finder filters.");
             SidebarButton("Advanced", SettingsPage.Advanced, "Per-category chat-type controls.");
             SidebarButton("Other", SettingsPage.Other, "Language and logging options.");
@@ -176,6 +197,21 @@ namespace NoSoliciting.Interface
                     ImGui.PopTextWrapPos();
                     ImGui.EndTooltip();
                 }
+            }
+
+            // Test Mode
+            var testMode = this.Plugin.Config.TestMode;
+            if (ImGui.Checkbox("Test Mode (do not hide, just log)", ref testMode)) {
+                this.Plugin.Config.TestMode = testMode;
+                this.Plugin.Config.Save();
+            }
+
+            // Confidence Threshold
+            var threshold = this.Plugin.Config.ConfidenceThreshold;
+            ImGui.TextUnformatted("Confidence threshold");
+            if (ImGui.SliderFloat("##ns-threshold", ref threshold, 0.0f, 1.0f, "%.0f%%", ImGuiSliderFlags.AlwaysClamp)) {
+                this.Plugin.Config.ConfidenceThreshold = threshold;
+                this.Plugin.Config.Save();
             }
         }
 
@@ -428,6 +464,97 @@ namespace NoSoliciting.Interface
             if (ImGui.Button($"{saveLoc}##{name}-save")) {
                 this.Plugin.Config.Save();
                 this.Plugin.Config.CompileRegexes();
+            }
+        }
+
+        private void DrawTest() {
+            ImGui.TextUnformatted("Test Classification");
+            ImGui.Separator();
+
+            if (this.Plugin.MlFilter == null) {
+                ImGui.TextWrapped("Model not loaded. Load or configure the model on the Model page first.");
+                return;
+            }
+
+            // Chat type selector
+            if (ImGui.BeginCombo("Chat Type", _testChatType.Name(this.Plugin.DataManager))) {
+                foreach (var ct in Filter.FilteredChatTypes) {
+                    var selected = ct == _testChatType;
+                    if (ImGui.Selectable(ct.Name(this.Plugin.DataManager), selected)) {
+                        _testChatType = ct;
+                    }
+                    if (selected) ImGui.SetItemDefaultFocus();
+                }
+                if (ImGui.Selectable(ChatType.None.Name(this.Plugin.DataManager), _testChatType == ChatType.None)) {
+                    _testChatType = ChatType.None;
+                }
+                ImGui.EndCombo();
+            }
+
+            ImGui.TextUnformatted("Message (multi-line)");
+            ImGui.InputTextMultiline("##ns-test-msg", ref _testMessage, 4000, new Vector2(-1, 150));
+
+            if (ImGui.Button("Classify###ns-test-classify")) {
+                ClassifyTestMessage();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Clear###ns-test-clear")) {
+                _testMessage = string.Empty; _testRan = false; _testCategory = null; _testConfidence = 0; _testWouldFilter = false;
+            }
+
+            ImGui.Spacing();
+            ImGui.TextUnformatted("Examples (click to load):");
+            ImGui.BeginChild("##ns-test-examples", new Vector2(-1, 120), true);
+            foreach (var ex in _examples) {
+                if (ImGui.SmallButton(ex.label + "##exbtn")) {
+                    _testMessage = ex.text;
+                    _testChatType = ex.chatType;
+                    _testRan = false; // require explicit classify
+                }
+                if (ImGui.IsItemHovered()) {
+                    ImGui.BeginTooltip();
+                    ImGui.Text(ex.text);
+                    ImGui.EndTooltip();
+                }
+            }
+            ImGui.EndChild();
+
+            ImGui.Spacing();
+            ImGui.Separator();
+
+            if (_testRan) {
+                if (_testCategory == null) {
+                    ImGui.TextWrapped("Classification: Normal / Not filtered");
+                } else {
+                    ImGui.TextWrapped($"Classification: {_testCategory.Value.Name()} ({_testConfidence:P2})");
+                }
+                ImGui.TextWrapped($"Confidence Threshold: {this.Plugin.Config.ConfidenceThreshold:P0}");
+                ImGui.TextWrapped($"Would Filter (normal mode): {(_testWouldFilter ? "Yes" : "No")}");
+                if (this.Plugin.Config.TestMode && _testWouldFilter) {
+                    ImGui.TextWrapped("Current Test Mode active: message would NOT be hidden.");
+                }
+            } else {
+                ImGui.TextDisabled("No classification run yet.");
+            }
+        }
+
+        private void ClassifyTestMessage() {
+            _testRan = true;
+            _testCategory = null; _testConfidence = 0; _testWouldFilter = false;
+            var text = _testMessage?.Trim();
+            if (string.IsNullOrWhiteSpace(text)) return;
+            if (this.Plugin.MlFilter == null) return;
+
+            var (cat, conf) = this.Plugin.MlFilter.ClassifyMessage((ushort)_testChatType, text);
+            if (cat != MessageCategory.Normal) {
+                _testCategory = cat;
+                _testConfidence = conf;
+                var passes = conf >= this.Plugin.Config.ConfidenceThreshold && this.Plugin.Config.MlEnabledOn(cat, _testChatType);
+                _testWouldFilter = passes;
+            } else {
+                _testCategory = null;
+                _testConfidence = conf;
+                _testWouldFilter = false;
             }
         }
     }

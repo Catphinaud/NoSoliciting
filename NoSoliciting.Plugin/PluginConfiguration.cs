@@ -115,6 +115,9 @@ namespace NoSoliciting {
         public string? LocalModelZipPath { get; set; }
         // ==================================================================
 
+        public bool TestMode { get; set; } = false;
+        public float ConfidenceThreshold { get; set; } = 0.50f; // default 50%
+
         public IEnumerable<string> ValidChatSubstrings => this.ChatSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
         public IEnumerable<string> ValidPfSubstrings => this.PFSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
 

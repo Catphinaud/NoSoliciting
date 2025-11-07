@@ -40,9 +40,11 @@ namespace NoSoliciting {
             ? "custom"
             : this.ItemLevel
                 ? "ilvl"
-                : this.Classification?.Name();
+                : this.Classification != null ? $"{this.Classification?.Name()} ({(this.Confidence ?? 0f):P0})" : null;
 
-        internal Message(uint? defsVersion, ChatType type, uint actorId, SeString sender, SeString content, MessageCategory? classification, bool custom, bool ilvl, IEnumerable<MessageCategory> enabledSnapshot) {
+        public float? Confidence { get; }
+
+        internal Message(uint? defsVersion, ChatType type, uint actorId, SeString sender, SeString content, MessageCategory? classification, bool custom, bool ilvl, IEnumerable<MessageCategory> enabledSnapshot, float? confidence = null) {
             this.Id = Guid.NewGuid();
             this.ModelVersion = defsVersion;
             this.Timestamp = DateTime.Now;
@@ -54,6 +56,7 @@ namespace NoSoliciting {
             this.Custom = custom;
             this.ItemLevel = ilvl;
             this.EnabledSnapshot = enabledSnapshot;
+            this.Confidence = confidence;
         }
 
         [Serializable]
@@ -71,6 +74,7 @@ namespace NoSoliciting {
             public String Content { get; set; }
             public string? Reason { get; set; }
             public string? SuggestedClassification { get; set; }
+            public float? Confidence { get; set; }
         }
 
         public string? ToJson(string suggested) {
@@ -90,6 +94,7 @@ namespace NoSoliciting {
                         ? "ilvl"
                         : (this.Classification ?? MessageCategory.Normal).ToModelName(),
                 SuggestedClassification = suggested,
+                Confidence = this.Confidence,
             };
 
             return JsonConvert.SerializeObject(msg, new JsonSerializerSettings {
