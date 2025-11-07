@@ -12,5 +12,4 @@ filters are user-defined and are either case-insensitive substrings or
 regular expressions.
 
 All messages and listings filtered can be logged in case of false
-positives, and there is a reporting mechanism in which users can
-report if NoSoliciting had a false positive or a false negative.
+positives.

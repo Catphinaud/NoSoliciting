@@ -27,11 +27,6 @@ namespace NoSoliciting {
                 this.Plugin.ChatGui.PrintError($"[{Plugin.Name}] The /prmt command is deprecated and will be removed. Please use /nosol instead.");
             }
 
-            if (args == "report") {
-                this.Plugin.Ui.Report.Toggle();
-                return;
-            }
-
             this.Plugin.Ui.Settings.Toggle();
         }
     }

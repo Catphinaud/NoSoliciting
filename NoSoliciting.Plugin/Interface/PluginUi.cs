@@ -5,13 +5,11 @@ namespace NoSoliciting.Interface {
         private Plugin Plugin { get; }
 
         public Settings Settings { get; }
-        public Report Report { get; }
 
         public PluginUi(Plugin plugin) {
             this.Plugin = plugin;
 
             this.Settings = new Settings(plugin, this);
-            this.Report = new Report(plugin);
 
             this.Plugin.Interface.UiBuilder.Draw += this.Draw;
         }
@@ -23,7 +21,6 @@ namespace NoSoliciting.Interface {
 
         private void Draw() {
             this.Settings.Draw();
-            this.Report.Draw();
         }
     }
 }

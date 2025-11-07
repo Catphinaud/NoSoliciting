@@ -66,18 +66,12 @@ namespace NoSoliciting.Interface {
             }
 
             this.DrawMachineLearningConfig();
-
             this.DrawOtherFilters();
-
             this.DrawOtherTab();
 
             ImGui.EndTabBar();
 
             ImGui.Separator();
-
-            if (ImGui.Button(Language.ShowReportingWindow)) {
-                this.Ui.Report.Open();
-            }
 
             ImGui.End();
         }

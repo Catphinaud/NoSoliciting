@@ -1,5 +1,6 @@
 ﻿author: Noevain,kalilistic, Anna
-name: NoSoliciting
+name: NoSolicitingFork
+internal_name: NoSolicitingFork
 punchline: Adblock for FFXIV.
 description: |-
   Customisable chat and Party Finder filtering. In addition to letting
@@ -14,6 +15,6 @@ description: |-
   - Trade ads
   - Community ads
   - Any PF with an item level over the max
-repo_url: https://github.com/Noevain/NoSoliciting
+repo_url: https://github.com/Catphinaud/NoSoliciting
 load_priority: 100
 accepts_feedback: true
