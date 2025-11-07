@@ -316,4 +316,7 @@
   <data name="ReportModalClassificationOtherDescription" xml:space="preserve">
     <value>Mensajes que no encajan en ninguna otra categoría.</value>
   </data>
+  <data name="ModelStatusWaiting" xml:space="preserve">
+    <value>Esperando configuración</value>
+  </data>
 </root>

@@ -289,6 +289,9 @@
   <data name="ModelStatusInitialised" xml:space="preserve">
     <value>初始化完成</value>
   </data>
+  <data name="ModelStatusWaiting" xml:space="preserve">
+    <value>等待配置</value>
+  </data>
   <data name="ReportModalDisabledFilterNotEnabled" xml:space="preserve">
     <value>您暂时无法报告此消息。因为您在当时并没有过滤此类消息。</value>
   </data>

@@ -249,6 +249,9 @@
     <data name="ModelStatusInitialised" xml:space="preserve">
         <value>Initialised</value>
     </data>
+    <data name="ModelStatusWaiting" xml:space="preserve">
+        <value>Waiting for configuration</value>
+    </data>
     <data name="ReportModalDisabledBadModel" xml:space="preserve">
         <value>Reporting is disabled because your ML model was not functioning when you saw this message.</value>
     </data>

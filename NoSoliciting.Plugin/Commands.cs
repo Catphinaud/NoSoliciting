@@ -8,18 +8,13 @@ namespace NoSoliciting {
         internal Commands(Plugin plugin) {
             this.Plugin = plugin;
 
-            this.Plugin.CommandManager.AddHandler("/prmt", new CommandInfo(this.OnCommand) {
-                HelpMessage = "Opens the NoSoliciting configuration (deprecated)",
-                ShowInHelp = false,
-            });
-            this.Plugin.CommandManager.AddHandler("/nosol", new CommandInfo(this.OnCommand) {
+            this.Plugin.CommandManager.AddHandler("/norp", new CommandInfo(this.OnCommand) {
                 HelpMessage = "Opens the NoSoliciting configuration",
             });
         }
 
         public void Dispose() {
-            this.Plugin.CommandManager.RemoveHandler("/nosol");
-            this.Plugin.CommandManager.RemoveHandler("/prmt");
+            this.Plugin.CommandManager.RemoveHandler("/norp");
         }
 
         private void OnCommand(string command, string args) {

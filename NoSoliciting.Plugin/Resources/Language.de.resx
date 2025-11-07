@@ -261,4 +261,7 @@
   <data name="ReportModalDisabledFilterNotEnabled" xml:space="preserve">
     <value>Du kannst diese Nachricht nicht melden, weil du diese Art von Nachrichten nicht gefiltert hast, als du sie gesehen hast.</value>
   </data>
+  <data name="ModelStatusWaiting" xml:space="preserve">
+    <value>Warten auf Konfiguration</value>
+  </data>
 </root>

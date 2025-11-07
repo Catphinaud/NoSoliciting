@@ -14,9 +14,9 @@ namespace NoSoliciting {
 
         private IDalamudPluginInterface Interface { get; set; } = null!;
 
-        public int Version { get; set; } = 2;
+        public int Version { get; set; } = 3;
 
-        public bool AdvancedMode { get; set; }
+        public bool AdvancedMode { get; set; } = true;
 
         public bool CustomChatFilter { get; set; }
         public List<string> ChatSubstrings { get; } = new();
@@ -95,6 +95,25 @@ namespace NoSoliciting {
         public bool LogFilteredChat { get; set; } = true;
 
         public bool ConsiderPrivatePfs { get; set; }
+
+        // ================= ML model source configuration =================
+        // If true, fetch manifest from GitHub releases; otherwise use ModelManifestUrl
+        public bool UseGithubReleases { get; set; }
+
+        // Direct URL to a manifest.yaml file (ignored if UseGithubReleases is true)
+        public string? ModelManifestUrl { get; set; }
+
+        // GitHub repo in the form "owner/name". Defaults to the provided model repo.
+        public string GithubRepo { get; set; } = "Catphinaud/NoSoliciting-Model";
+
+        // Name of the asset containing the manifest within the release assets.
+        public string GithubManifestAssetName { get; set; } = "manifest.yaml";
+
+        // Optional: specific release tag. If empty/null, uses the latest release.
+        public string? GithubReleaseTag { get; set; } = null;
+
+        public string? LocalModelZipPath { get; set; }
+        // ==================================================================
 
         public IEnumerable<string> ValidChatSubstrings => this.ChatSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
         public IEnumerable<string> ValidPfSubstrings => this.PFSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));

@@ -270,4 +270,7 @@
   <data name="ReportModalClassificationOtherDescription" xml:space="preserve">
     <value>Messages qui ne correspondent à aucune des autres catégories.</value>
   </data>
+  <data name="ModelStatusWaiting" xml:space="preserve">
+    <value>En attente de configuration</value>
+  </data>
 </root>

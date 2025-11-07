@@ -316,4 +316,7 @@
   <data name="ReportModalClassificationOtherDescription" xml:space="preserve">
     <value>不屬於任何類別的消息。</value>
   </data>
+  <data name="ModelStatusWaiting" xml:space="preserve">
+    <value>等待設定</value>
+  </data>
 </root>

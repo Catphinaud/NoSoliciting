@@ -52,7 +52,7 @@ namespace NoSoliciting {
         internal PluginConfiguration Config { get; }
         internal PluginUi Ui { get; }
         private Commands Commands { get; }
-        internal MlFilterStatus MlStatus { get; set; } = MlFilterStatus.Uninitialised;
+        internal MlFilterStatus MlStatus { get; set; } = NoSoliciting.Ml.MlFilterStatus.Uninitialised;
         internal MlFilter? MlFilter { get; set; }
 
         private readonly List<Message> _messageHistory = new();
@@ -145,16 +145,24 @@ namespace NoSoliciting {
                 return;
             }
 
-            Task.Run(async () => this.MlFilter = await MlFilter.Load(this, showWindow))
-                .ContinueWith(e => {
-                    if (e.IsFaulted) {
-                        this.MlStatus = MlFilterStatus.Uninitialised;
+            _ = Task.Run(async () => {
+                try {
+                    var loaded = await MlFilter.Load(this, showWindow);
+                    this.MlFilter = loaded;
+
+                    if (loaded == null) {
+                        // Preserve whatever status was set inside Load (e.g., Waiting or Uninitialised)
+                        Plugin.Log.Info("Machine learning model not loaded (null). Current status: {0}", this.MlStatus);
                         return;
                     }
 
-                    this.MlStatus = MlFilterStatus.Initialised;
+                    this.MlStatus = NoSoliciting.Ml.MlFilterStatus.Initialised;
                     Log.Info("Machine learning model loaded");
-                });
+                } catch (Exception e) {
+                    this.MlStatus = NoSoliciting.Ml.MlFilterStatus.Uninitialised;
+                    Plugin.Log.Error(e, "Failed to load ML filter");
+                }
+            });
         }
 
         public void AddMessageHistory(Message message) {

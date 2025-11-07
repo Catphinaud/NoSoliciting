@@ -316,4 +316,7 @@
   <data name="ReportModalDisabledFilterNotEnabled" xml:space="preserve">
     <value>Função relatar desabilitada por que você não estava filtrando este tipo de mensagem quando a viu.</value>
   </data>
+  <data name="ModelStatusWaiting" xml:space="preserve">
+    <value>Aguardando configuração</value>
+  </data>
 </root>

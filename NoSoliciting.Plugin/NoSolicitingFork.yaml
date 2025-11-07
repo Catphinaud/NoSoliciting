@@ -1,0 +1,20 @@
+﻿author: Noevain,kalilistic, Anna
+name: NoSolicitingFork
+internal_name: NoSolicitingFork
+punchline: Adblock for FFXIV.
+description: |-
+  Customisable chat and Party Finder filtering. In addition to letting
+  you filter anything from chat and PF, it comes with built-in filters
+  for the following:
+
+  - RMT (both gil and content)
+  - FC ads
+  - RP ads
+  - Phishing messages
+  - Static recruitment
+  - Trade ads
+  - Community ads
+  - Any PF with an item level over the max
+repo_url: https://github.com/Catphinaud/NoSoliciting
+load_priority: 100
+accepts_feedback: true
