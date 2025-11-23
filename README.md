@@ -13,3 +13,8 @@ regular expressions.
 
 All messages and listings filtered can be logged in case of false
 positives.
+
+
+## Forked installation
+
+`https://raw.githubusercontent.com/Catphinaud/DalamudPlugins/refs/heads/main/pluginmaster.json`
