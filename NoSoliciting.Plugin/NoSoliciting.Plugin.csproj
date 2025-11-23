@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<Title>NoSoliciting.Plugin</Title>
 		<Authors>Anna,kalilistic,Noevain</Authors>
-		<Version>3.1.9.1</Version>
+		<Version>3.1.9.2</Version>
 		<Platforms>x64</Platforms>
 		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -22,6 +22,7 @@
 		<PackageVersion>$(Version)</PackageVersion>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
 		<NoWarn>CS1591</NoWarn>
+        <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
 	</PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Fody" Version="6.8.0" PrivateAssets="all"/>
