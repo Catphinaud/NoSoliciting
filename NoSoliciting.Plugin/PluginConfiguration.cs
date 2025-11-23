@@ -98,7 +98,7 @@ namespace NoSoliciting {
 
         // ================= ML model source configuration =================
         // If true, fetch manifest from GitHub releases; otherwise use ModelManifestUrl
-        public bool UseGithubReleases { get; set; }
+        public bool UseGithubReleases { get; set; } = true;
 
         // Direct URL to a manifest.yaml file (ignored if UseGithubReleases is true)
         public string? ModelManifestUrl { get; set; }
