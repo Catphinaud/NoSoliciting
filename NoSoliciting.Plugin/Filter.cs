@@ -123,14 +123,14 @@ namespace NoSoliciting {
                 this.Plugin.AddPartyFinderHistory(new Message(
                     version,
                     ChatType.None,
-                    (uint)listing.ContentId,
+                    (uint) listing.ContentId,
                     listing.Name,
                     listing.Description,
                     category,
                     reason == "custom",
                     reason == "ilvl",
-                    this.Plugin.Config.CreateFiltersClone()
-                ));
+                    this.Plugin.Config.CreateFiltersClone(),
+                    null));
 
                 if (category == null && reason == null) {
                     return;

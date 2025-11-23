@@ -9,8 +9,10 @@ using Dalamud.Interface.Utility.Raii;
 using NoSoliciting.Ml;
 using NoSoliciting.Resources;
 
-namespace NoSoliciting.Interface {
-    public class Settings : IDisposable {
+namespace NoSoliciting.Interface
+{
+    public class Settings : IDisposable
+    {
         private Plugin Plugin { get; }
         private PluginUi Ui { get; }
 
@@ -24,7 +26,8 @@ namespace NoSoliciting.Interface {
         private bool _testWouldFilter;
         private bool _testRan;
 
-        private readonly (string label, ChatType chatType, string text)[] _examples = {
+        private readonly (string label, ChatType chatType, string text)[] _examples =
+        {
             ("RMT Gil", ChatType.Shout, "Cheap gil for sale! 10M=5$ bestgil.com"),
             ("RMT Content", ChatType.Shout, "Offering raid clears & leveling services, fast delivery discord"),
             ("Phishing", ChatType.Say, "FREE GIFT claim at mogstation-freerewards.com now"),
@@ -467,7 +470,8 @@ namespace NoSoliciting.Interface {
             }
         }
 
-        private void DrawTest() {
+        private void DrawTest()
+        {
             ImGui.TextUnformatted("Test Classification");
             ImGui.Separator();
 
@@ -483,11 +487,14 @@ namespace NoSoliciting.Interface {
                     if (ImGui.Selectable(ct.Name(this.Plugin.DataManager), selected)) {
                         _testChatType = ct;
                     }
+
                     if (selected) ImGui.SetItemDefaultFocus();
                 }
+
                 if (ImGui.Selectable(ChatType.None.Name(this.Plugin.DataManager), _testChatType == ChatType.None)) {
                     _testChatType = ChatType.None;
                 }
+
                 ImGui.EndCombo();
             }
 
@@ -497,9 +504,14 @@ namespace NoSoliciting.Interface {
             if (ImGui.Button("Classify###ns-test-classify")) {
                 ClassifyTestMessage();
             }
+
             ImGui.SameLine();
             if (ImGui.Button("Clear###ns-test-clear")) {
-                _testMessage = string.Empty; _testRan = false; _testCategory = null; _testConfidence = 0; _testWouldFilter = false;
+                _testMessage = string.Empty;
+                _testRan = false;
+                _testCategory = null;
+                _testConfidence = 0;
+                _testWouldFilter = false;
             }
 
             ImGui.Spacing();
@@ -511,12 +523,15 @@ namespace NoSoliciting.Interface {
                     _testChatType = ex.chatType;
                     _testRan = false; // require explicit classify
                 }
+
                 if (ImGui.IsItemHovered()) {
                     ImGui.BeginTooltip();
-                    ImGui.Text(ex.text);
-                    ImGui.EndTooltip();
+                    ImGui.TextWrapped(ex.text);
+                    ImGui.Separator();
+                    ImGui.TextDisabled("Tip: Click classify to get confidence and filter decision.");
                 }
             }
+
             ImGui.EndChild();
 
             ImGui.Spacing();
@@ -528,6 +543,7 @@ namespace NoSoliciting.Interface {
                 } else {
                     ImGui.TextWrapped($"Classification: {_testCategory.Value.Name()} ({_testConfidence:P2})");
                 }
+
                 ImGui.TextWrapped($"Confidence Threshold: {this.Plugin.Config.ConfidenceThreshold:P0}");
                 ImGui.TextWrapped($"Would Filter (normal mode): {(_testWouldFilter ? "Yes" : "No")}");
                 if (this.Plugin.Config.TestMode && _testWouldFilter) {
@@ -538,14 +554,17 @@ namespace NoSoliciting.Interface {
             }
         }
 
-        private void ClassifyTestMessage() {
+        private void ClassifyTestMessage()
+        {
             _testRan = true;
-            _testCategory = null; _testConfidence = 0; _testWouldFilter = false;
+            _testCategory = null;
+            _testConfidence = 0;
+            _testWouldFilter = false;
             var text = _testMessage?.Trim();
             if (string.IsNullOrWhiteSpace(text)) return;
             if (this.Plugin.MlFilter == null) return;
 
-            var (cat, conf) = this.Plugin.MlFilter.ClassifyMessage((ushort)_testChatType, text);
+            var (cat, conf) = this.Plugin.MlFilter.ClassifyMessage((ushort) _testChatType, text);
             if (cat != MessageCategory.Normal) {
                 _testCategory = cat;
                 _testConfidence = conf;
