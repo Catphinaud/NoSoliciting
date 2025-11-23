@@ -14,7 +14,7 @@ namespace NoSoliciting {
 
         private IDalamudPluginInterface Interface { get; set; } = null!;
 
-        public int Version { get; set; } = 3;
+        public int Version { get; set; } = 4; // bumped from 3 to 4 for persisted model/plugin version
 
         public bool AdvancedMode { get; set; } = true;
 
@@ -118,11 +118,22 @@ namespace NoSoliciting {
         public bool TestMode { get; set; } = false;
         public float ConfidenceThreshold { get; set; } = 0.50f; // default 50%
 
+        // Persisted versions to allow skipping remote manifest/model download when unchanged.
+        // Null indicates not yet recorded (first run or migration).
+        public uint? LastLoadedModelVersion { get; set; }
+        public string? LastLoadedPluginVersion { get; set; }
+
         public IEnumerable<string> ValidChatSubstrings => this.ChatSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
         public IEnumerable<string> ValidPfSubstrings => this.PFSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
 
         public void Initialise(IDalamudPluginInterface pi) {
             this.Interface = pi;
+            // Migration: if existing config has older Version, bump and initialise new fields
+            if (this.Version < 4) {
+                // leave LastLoadedModelVersion/LastLoadedPluginVersion null so first post-migration run performs normal download
+                this.Version = 4;
+                this.Save();
+            }
             this.CompileRegexes();
         }
 

@@ -70,6 +70,46 @@ namespace NoSoliciting.Ml {
                 }
             }
 
+            // early fastpath
+            // if we have persisted versions and matching cached files, attempt to initialise directly without network
+            if (plugin.Config.LastLoadedModelVersion.HasValue && !string.IsNullOrWhiteSpace(plugin.Config.LastLoadedPluginVersion)) {
+                var manifestPath = CachedFilePath(plugin, ManifestName);
+                var modelPath = CachedFilePath(plugin, ModelName);
+                if (File.Exists(manifestPath) && File.Exists(modelPath)) {
+                    try {
+                        var manifestText = await File.ReadAllTextAsync(manifestPath);
+                        var manifest = LoadYaml<Manifest>(manifestText);
+                        if (manifest.Version == plugin.Config.LastLoadedModelVersion.Value && plugin.Config.LastLoadedPluginVersion == plugin.CurrentPluginVersion) {
+                            // Validate cached model hash quickly before trusting it
+                            var modelBytes = await File.ReadAllBytesAsync(modelPath);
+                            var modelHash = SHA256.HashData(modelBytes);
+                            if (modelHash.SequenceEqual(manifest.Hash())) {
+                                Plugin.Log.Info("[ML] Fast-path load: Using cached model version {0} (plugin version {1} unchanged). Skipping remote download.", manifest.Version, plugin.CurrentPluginVersion);
+                                plugin.MlStatus = MlFilterStatus.Initialising;
+                                var classifierFast = new Classifier();
+                                classifierFast.Initialise(modelBytes);
+                                plugin.MlStatus = MlFilterStatus.Initialised;
+                                return new MlFilter(manifest.Version, manifest.ReportUrl, classifierFast);
+                            } else {
+                                Plugin.Log.Warning("[ML] Fast-path aborted: cached model hash mismatch; will perform normal download.");
+                            }
+                        } else {
+                            if (manifest.Version != plugin.Config.LastLoadedModelVersion.Value) {
+                                Plugin.Log.Info("[ML] Cached manifest version {0} differs from persisted {1}; performing normal download.", manifest.Version, plugin.Config.LastLoadedModelVersion.Value);
+                            } else {
+                                Plugin.Log.Info("[ML] Plugin version changed from {0} to {1}; performing normal download.", plugin.Config.LastLoadedPluginVersion, plugin.CurrentPluginVersion);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        Plugin.Log.Warning(ex, "[ML] Fast-path failed; falling back to normal download.");
+                    }
+                } else {
+                    Plugin.Log.Info("[ML] Fast-path not possible: cached files missing (ManifestExists={0}, ModelExists={1}).", File.Exists(manifestPath), File.Exists(modelPath));
+                }
+            } else {
+                Plugin.Log.Info("[ML] Fast-path not possible: persisted version fields null (ModelVersion={0}, PluginVersion={1}).", plugin.Config.LastLoadedModelVersion, plugin.Config.LastLoadedPluginVersion);
+            }
+
             // Wait for configuration to specify a URL or GitHub repo if neither is set
             if (!plugin.Config.UseGithubReleases && string.IsNullOrWhiteSpace(plugin.Config.ModelManifestUrl)) {
                 plugin.MlStatus = MlFilterStatus.Waiting;

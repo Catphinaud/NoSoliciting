@@ -65,7 +65,10 @@ namespace NoSoliciting {
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public string AssemblyLocation { get; private set; } = Assembly.GetExecutingAssembly().Location;
 
-        public Plugin(IPluginLog log, IDalamudPluginInterface @interface, IClientState clientState, IChatGui chatGui, 
+        // Current plugin version (assembly informational or file version)
+        internal string CurrentPluginVersion { get; } = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
+
+        public Plugin(IPluginLog log, IDalamudPluginInterface @interface, IClientState clientState, IChatGui chatGui,
             IPartyFinderGui partyFinderGui, IDataManager dataManager, ICommandManager commandManager, IToastGui toastGui,IGameInteropProvider gameInteropProvider)
         {
             Log = log;
@@ -158,6 +161,19 @@ namespace NoSoliciting {
 
                     this.MlStatus = NoSoliciting.Ml.MlFilterStatus.Initialised;
                     Log.Info("Machine learning model loaded");
+
+                    // Update persisted versions if successful
+                    // and not using local override (model version 0 is override sentinel)
+                    if (loaded.Version != 0) {
+                        if (this.Config.LastLoadedModelVersion != loaded.Version || this.Config.LastLoadedPluginVersion != this.CurrentPluginVersion) {
+                            Plugin.Log.Info("[ML] Persisting model version {0} and plugin version {1}", loaded.Version, this.CurrentPluginVersion);
+                            this.Config.LastLoadedModelVersion = loaded.Version;
+                            this.Config.LastLoadedPluginVersion = this.CurrentPluginVersion;
+                            this.Config.Save();
+                        }
+                    } else {
+                        Plugin.Log.Info("[ML] Local override model in use; not updating persisted version fields.");
+                    }
                 } catch (Exception e) {
                     this.MlStatus = NoSoliciting.Ml.MlFilterStatus.Uninitialised;
                     Plugin.Log.Error(e, "Failed to load ML filter");
