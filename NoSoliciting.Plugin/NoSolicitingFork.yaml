@@ -16,5 +16,6 @@ description: |-
   - Community ads
   - Any PF with an item level over the max
 repo_url: https://github.com/Catphinaud/NoSoliciting
+icon_url: https://raw.githubusercontent.com/Catphinaud/NoSoliciting/refs/heads/master/images/icon.png
 load_priority: 100
 accepts_feedback: true
