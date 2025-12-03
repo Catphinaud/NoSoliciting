@@ -7,9 +7,11 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using NoSoliciting.Ml;
 
-namespace NoSoliciting {
+namespace NoSoliciting
+{
     [Serializable]
-    public class PluginConfiguration : IPluginConfiguration {
+    public class PluginConfiguration : IPluginConfiguration
+    {
         public static readonly PluginConfiguration Default = new();
 
         private IDalamudPluginInterface Interface { get; set; } = null!;
@@ -36,55 +38,67 @@ namespace NoSoliciting {
 
         public bool FollowGameLanguage { get; set; }
 
-        public HashSet<MessageCategory> BasicMlFilters { get; set; } = new() {
+        public HashSet<MessageCategory> BasicMlFilters { get; set; } = new()
+        {
             MessageCategory.RmtGil,
             MessageCategory.RmtContent,
             MessageCategory.Phishing,
         };
 
-        public Dictionary<MessageCategory, HashSet<ChatType>> MlFilters { get; set; } = new() {
-            [MessageCategory.RmtGil] = new HashSet<ChatType> {
+        public Dictionary<MessageCategory, HashSet<ChatType>> MlFilters { get; set; } = new()
+        {
+            [MessageCategory.RmtGil] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.Say,
                 ChatType.Shout,
             },
-            [MessageCategory.RmtContent] = new HashSet<ChatType> {
+            [MessageCategory.RmtContent] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.Say,
                 ChatType.Shout,
             },
-            [MessageCategory.Phishing] = new HashSet<ChatType> {
+            [MessageCategory.Phishing] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.TellIncoming,
             },
-            [MessageCategory.Roleplaying] = new HashSet<ChatType> {
+            [MessageCategory.Roleplaying] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.Shout,
                 ChatType.Yell,
             },
-            [MessageCategory.FreeCompany] = new HashSet<ChatType> {
+            [MessageCategory.FreeCompany] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.Shout,
                 ChatType.Yell,
                 ChatType.TellIncoming,
             },
-            [MessageCategory.Static] = new HashSet<ChatType> {
+            [MessageCategory.Static] = new HashSet<ChatType>
+            {
                 ChatType.None,
             },
-            [MessageCategory.StaticSub] = new HashSet<ChatType> {
+            [MessageCategory.StaticSub] = new HashSet<ChatType>
+            {
                 ChatType.None,
             },
-            [MessageCategory.Trade] = new HashSet<ChatType> {
-                ChatType.None,
-                ChatType.Shout,
-                ChatType.Yell,
-            },
-            [MessageCategory.Community] = new HashSet<ChatType> {
+            [MessageCategory.Trade] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.Shout,
                 ChatType.Yell,
             },
-            [MessageCategory.Fluff] = new HashSet<ChatType> {
+            [MessageCategory.Community] = new HashSet<ChatType>
+            {
+                ChatType.None,
+                ChatType.Shout,
+                ChatType.Yell,
+            },
+            [MessageCategory.Fluff] = new HashSet<ChatType>
+            {
                 ChatType.None,
                 ChatType.Shout,
                 ChatType.Yell,
@@ -126,7 +140,8 @@ namespace NoSoliciting {
         public IEnumerable<string> ValidChatSubstrings => this.ChatSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
         public IEnumerable<string> ValidPfSubstrings => this.PFSubstrings.Where(needle => !string.IsNullOrWhiteSpace(needle));
 
-        public void Initialise(IDalamudPluginInterface pi) {
+        public void Initialise(IDalamudPluginInterface pi)
+        {
             this.Interface = pi;
             // Migration: if existing config has older Version, bump and initialise new fields
             if (this.Version < 4) {
@@ -134,14 +149,36 @@ namespace NoSoliciting {
                 this.Version = 4;
                 this.Save();
             }
+
+            if (this.Version < 5) {
+                this.Version = 5;
+                this.AddPfFiltersFromChatFilters();
+                this.Save();
+            }
+
             this.CompileRegexes();
         }
 
-        public void Save() {
+        private void AddPfFiltersFromChatFilters()
+        {
+            string[] filtersToAdd = JsonConvert.DeserializeObject<string[]>(
+                    """[" Dj. ","twitch.t","\ue071","\ue074","\ue082","Deep&Organic House","2fPYFCEzkQ","clubnova","discord.gg\/","carrd.","discord.com","signatures","petition","casual fg","partake.gg","nightclub","SPECESHIP HOUSING","shark-cl","deathroll","sproutraider","howlxiv"]""")
+                !;
+
+            foreach (string filter in filtersToAdd) {
+                if (!this.PFSubstrings.Contains(filter)) {
+                    this.PFSubstrings.Add(filter);
+                }
+            }
+        }
+
+        public void Save()
+        {
             this.Interface.SavePluginConfig(this);
         }
 
-        public void CompileRegexes() {
+        public void CompileRegexes()
+        {
             this.CompiledChatRegexes = this.ChatRegexes
                 .Where(reg => !string.IsNullOrWhiteSpace(reg))
                 .Select(reg => new Regex(reg, RegexOptions.Compiled))
@@ -152,7 +189,8 @@ namespace NoSoliciting {
                 .ToList();
         }
 
-        internal bool MlEnabledOn(MessageCategory category, ChatType chatType) {
+        internal bool MlEnabledOn(MessageCategory category, ChatType chatType)
+        {
             HashSet<ChatType>? filtered;
 
             if (this.AdvancedMode) {
@@ -174,7 +212,8 @@ namespace NoSoliciting {
             return filtered.Contains(chatType);
         }
 
-        internal IEnumerable<MessageCategory> CreateFiltersClone() {
+        internal IEnumerable<MessageCategory> CreateFiltersClone()
+        {
             var filters = new HashSet<MessageCategory>();
 
             foreach (var category in (MessageCategory[]) Enum.GetValues(typeof(MessageCategory))) {
